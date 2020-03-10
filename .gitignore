@@ -1,0 +1,6 @@
+tweak/.theos/
+tweak/packages/
+.DS_Store
+/*.xcodeproj
+/.vscode/
+/packages/
