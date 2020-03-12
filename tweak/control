@@ -1,0 +1,9 @@
+Package: zzz.urameshiyaa.saisaki
+Name: saisaki
+Depends: mobilesubstrate, firmware (>= 12.2) | ${LIBSWIFT}
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: Chinh Vu
+Author: Chinh Vu
+Section: Tweaks

@@ -1,6 +1,8 @@
 tweak/.theos/
 tweak/packages/
 .DS_Store
-/*.xcodeproj
+xcuserdata
 /.vscode/
 /packages/
+
+saisaki-test/
