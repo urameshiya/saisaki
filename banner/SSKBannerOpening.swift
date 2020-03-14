@@ -41,7 +41,7 @@ public class SSKBannerOpening : UIView {
 		for i in 0..<numBanners {
 			let tiltAngle = CGFloat.random(in: 0..<maxTilt) * (i % 2 == 0 ? 1.0 : -1.0)
 			let banner = SSKPinkBannerView()
-//			banner.rotAngle = tiltAngle
+			banner.rotAngle = tiltAngle
 			banner.bounds = CGRect(x: 0, y: 0, width: 1000, height: 100)
 			banners.append(banner)
 			addSubview(banner)
@@ -50,7 +50,7 @@ public class SSKBannerOpening : UIView {
 		
 		saisakiBanner = SSKPinkBannerView()
 		saisakiBanner.bounds = CGRect(x: 0, y: 0, width: 1500, height: 150)
-//		saisakiBanner.rotAngle = CGFloat.random(in: -maxTilt..<maxTilt)
+		saisakiBanner.rotAngle = CGFloat.random(in: -maxTilt..<maxTilt)
 		addSubview(saisakiBanner)
 	}
 	
@@ -61,7 +61,7 @@ public class SSKBannerOpening : UIView {
 		let duration: Double = animated ? 1.0 : 0.0
 		let mainBanner = saisakiBanner!
 		let emblem = saisakiWord
-		emblem?.alpha = 0
+//		emblem?.alpha = 0
 
 		UIView.animateKeyframes(withDuration: duration, delay: 0, options: [], animations: {
 			for i in 0..<self.numBanners {
@@ -105,7 +105,7 @@ public class SSKBannerOpening : UIView {
 				mainBanner.center = mainBanner.getPositionBySliding(dx: dxOut + mainBanner.bounds.midX)
 			}
 			UIView.addKeyframe(withRelativeStartTime: 0.9, relativeDuration: 0) {
-				self.saisakiWord?.alpha = 0
+//				self.saisakiWord?.alpha = 0
 			}
 		}, completion: completion)
 	}

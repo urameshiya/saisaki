@@ -9,13 +9,21 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
 
 %hook SBCoverSheetPresentationManager
 
--(void)setCoverSheetPresented:(BOOL)presented animated:(BOOL)animated options:(unsigned long long)arg3 withCompletion:(/*^block*/id)arg4 {
+-(void)setCoverSheetPresented:(BOOL)presented animated:(BOOL)arg2 options:(unsigned long long)arg3 withCompletion:(/*^block*/id)arg4 {
     if (!presented) {
-        [lockscreenWrapper unlockSuccessful:true];
+        [lockscreenWrapper unlockSuccessful:true completion:^{
+            log("done unlocking");
+            %orig(false, false, arg3, arg4);
+        }];
+        log("dismissing...");
+        SBLockScreenManager *lsManager = [%c(SBLockScreenManager) sharedInstance];
+        [lsManager _createAuthenticationAssertion]; // fixes touchID bug
+        [lsManager setPasscodeVisible:false animated:true];
     } else {
         [lockscreenWrapper lockScreenWillAppear];
+        %orig;
+        log("will appear");
     }
-    %orig;
 }
 
 %end
@@ -30,14 +38,11 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
         lockscreenWrapper = manager;
         wallpaperWrapper = manager;
     }
-
-    if (!self.ssk_wallpaperView) {
-        SBFWallpaperView *org = %orig;
-        WrapperWallpaperView *ovr = [[%c(WrapperWallpaperView) alloc] initWithFrame:org.frame variant:arg2 wallpaperSettingsProvider:self];
+    if (self.ssk_wallpaperView == nil) {
+        CGRect bounds = UIScreen.mainScreen.bounds;
+        WrapperWallpaperView *ovr = [[%c(WrapperWallpaperView) alloc] initWithFrame:bounds configuration:arg1 variant:arg2 cacheGroup:nil delegate:self options:arg4];
         self.ssk_wallpaperView = ovr;
     }
-
-    log("vending variant %lld", arg2);
     
     return self.ssk_wallpaperView;
 }
@@ -46,27 +51,38 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
     return ls.count == 0 ? [self valueForKey:@"_lockscreenBlurViews"] : ls;
 }
 
+-(void)cleanupOldSharedWallpaper:(id)arg1 lockSreenWallpaper:(id)arg2 homeScreenWallpaper:(id)arg3 {
+    if ([arg1 isKindOfClass:[%c(WrapperWallpaperView) class]]) {
+        return; // ios 13 cleans up our old wallpaper. maybe we don't want that
+    }
+    %orig;
+}
+
 %new
 -(void)updateWallpaper {
-    [self _updateBlurImagesForVariant:self.ssk_wallpaperView.variant];
+    [self _updateBlurImagesForVariant:self.ssk_wallpaperView.variant]; // update cache images
 
 }
 
 %new
 -(UIView*)wallpaperView {
-    // UIView *wpView = [self sharedWallpaperView];
-    // // log("wallpaperView %{public}@", wpView);
-    // return wpView;
     return self.ssk_wallpaperView;
 }
 %end
 
 %subclass WrapperWallpaperView : SBFWallpaperView
+-(id)initWithFrame:(CGRect)arg1 configuration:(id)arg2 variant:(long long)arg3 cacheGroup:(id)arg4 delegate:(id)arg5 options:(unsigned long long)arg6 {
+    [wallpaperWrapper initializeWithFrame:arg1];
+    return %orig;
+}
 
+
+%group ios12
 -(id)initWithFrame:(CGRect)arg1 variant:(long long)arg2 wallpaperSettingsProvider:(id)arg3 {
     [wallpaperWrapper initializeWithFrame:arg1];
     return %orig;
 }
+%end
 
 -(id)_computeAverageColor {
     return [wallpaperWrapper overridenWallpaperColor];
@@ -78,23 +94,21 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
 
 -(id)snapshotImage {
     id res = [wallpaperWrapper snapshotImage];
-    log("snapshot %{public}@", res);
     return res;
+}
+
+// disable caching blur view images
+-(id)cacheGroup {
+    return nil;
 }
 %end
 
-%hook SBCoverSheetPrimarySlidingViewController
-
-// -(void)_beginTransitionFromAppeared:(BOOL)appeared {
-//     // NO-OP
-//     log("sliding view controller %@appeared", appeared ? @"" : @"NOT ");
-//     if (!appeared) {
-//         %orig;
-//     }
-// }
-
-%end
-
 %ctor {
-    log("loaded");
+    if (@available(ios 13.0, *)) {
+        log("loaded ios >= 13.0");
+        %init();
+    } else {
+        log("loaded ios < 13.0");
+        %init(ios12);
+    }
 }

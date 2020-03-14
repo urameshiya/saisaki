@@ -24,8 +24,8 @@ import UIKit
 }
 
 @objc public protocol LockScreenWrapper: class {
-	@objc(unlockSuccessful:)
-	func unlock(successful: Bool)
+	@objc(unlockSuccessful:completion:)
+	func unlock(successful: Bool, completion: (() -> Void)?)
 	
 	func lockScreenWillAppear()
 	
@@ -46,21 +46,14 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 //			let ctx = UIGraphicsGetCurrentContext()!
 			overrideWallpaper.drawHierarchy(in: overrideWallpaper.bounds, afterScreenUpdates: true)
 			let snapshot = UIGraphicsGetImageFromCurrentImageContext()
+			log("banner frame " + (banners?.saisakiWord?.frame.debugDescription ?? "null"))
 			UIGraphicsEndImageContext()
 			cachedSnapshot = snapshot
 			shouldUpdateCachedSnapshot = false
 		}
 		return cachedSnapshot
 	}
-	
-	func updateCachedSnapshot() {
-		UIGraphicsBeginImageContext(overrideWallpaper.bounds.size)
-		overrideWallpaper.drawHierarchy(in: overrideWallpaper.bounds, afterScreenUpdates: true)
-		let snapshot = UIGraphicsGetImageFromCurrentImageContext()
-		UIGraphicsEndImageContext()
-		cachedSnapshot = snapshot
-	}
-	
+
 	weak var wallpaperProvider: WallpaperProviding?
 	var banners: SSKBannerOpening?
 	var overrideWallpaper: SSKColoredWallpaperView
@@ -72,17 +65,20 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 		overrideWallpaper = SSKColoredWallpaperView(color: #colorLiteral(red: 0.9030858278, green: 0.2467186451, blue: 0.6991283298, alpha: 1), emblem: wpEmblem)
 	}
 	
-	public func unlock(successful: Bool) {
+	public func unlock(successful: Bool, completion: (() -> Void)? = nil) {
 		guard let banners = banners else {
 			return
 		}
 		if (successful) {
 			banners.open(animated: true) { _ in
+				completion?()
 				banners.removeFromSuperview()
 				self.banners = nil
+				self.shouldUpdateCachedSnapshot = true
+				self.wallpaperProvider?.updateWallpaper()
 			}
-			shouldUpdateCachedSnapshot = true
-			self.wallpaperProvider?.updateWallpaper()
+//			shouldUpdateCachedSnapshot = true
+//			self.wallpaperProvider?.updateWallpaper()
 		}
 	}
 	
@@ -102,8 +98,11 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 			overrideWallpaper.addSubview(banners!)
 			banners?.frame = overrideWallpaper.bounds
 		}
-		banners?.close(animated: false)
-		shouldUpdateCachedSnapshot = true
+		banners?.close(animated: false, completion: { _ in
+			self.shouldUpdateCachedSnapshot = true // for some reason have to put this inside completion
+		})
+//		shouldUpdateCachedSnapshot = true
+//		self.wallpaperProvider?.updateWallpaper()
 	}
 	
 	public func overridenWallpaperColor() -> UIColor? {
