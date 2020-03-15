@@ -11,14 +11,20 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
 
 -(void)setCoverSheetPresented:(BOOL)presented animated:(BOOL)arg2 options:(unsigned long long)arg3 withCompletion:(/*^block*/id)arg4 {
     if (!presented) {
-        [lockscreenWrapper unlockSuccessful:true completion:^{
-            log("done unlocking");
-            %orig(false, false, arg3, arg4);
-        }];
-        log("dismissing...");
         SBLockScreenManager *lsManager = [%c(SBLockScreenManager) sharedInstance];
         [lsManager _createAuthenticationAssertion]; // fixes touchID bug
-        [lsManager setPasscodeVisible:false animated:true];
+        bool hasUnlockAction = [lsManager unlockActionBlock] != nil;
+        if ([lsManager _isPasscodeVisible]) {
+            [lsManager _runUnlockActionBlock:true]; // unlock request from notif. center
+            [lsManager setPasscodeVisible:false animated:true];
+        }
+        log("dismissing...");
+        [lockscreenWrapper unlockSuccessful:true completion:^(BOOL animated) {
+            log("done unlocking");
+            bool shouldDoNormalAnimation = !animated || hasUnlockAction;
+            log("shouldDoNormalAnimation %d", shouldDoNormalAnimation);
+            %orig(false, shouldDoNormalAnimation, arg3, arg4);
+        }];
     } else {
         [lockscreenWrapper lockScreenWillAppear];
         %orig;
@@ -43,7 +49,7 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
         WrapperWallpaperView *ovr = [[%c(WrapperWallpaperView) alloc] initWithFrame:bounds configuration:arg1 variant:arg2 cacheGroup:nil delegate:self options:arg4];
         self.ssk_wallpaperView = ovr;
     }
-    
+
     return self.ssk_wallpaperView;
 }
 -(id)_blurViewsForVariant:(long long)arg1 { // workaround the variant bug where variant = 0 unless reset wallpaper

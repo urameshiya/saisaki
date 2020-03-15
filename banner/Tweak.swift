@@ -25,7 +25,7 @@ import UIKit
 
 @objc public protocol LockScreenWrapper: class {
 	@objc(unlockSuccessful:completion:)
-	func unlock(successful: Bool, completion: (() -> Void)?)
+	func unlock(successful: Bool, completion: ((_ animated: Bool) -> Void)?)
 	
 	func lockScreenWillAppear()
 	
@@ -43,10 +43,8 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 		if (cachedSnapshot == nil || shouldUpdateCachedSnapshot) {
 			let canvasSize = overrideWallpaper.bounds.size
 			UIGraphicsBeginImageContextWithOptions(canvasSize, true, 0.0)
-//			let ctx = UIGraphicsGetCurrentContext()!
 			overrideWallpaper.drawHierarchy(in: overrideWallpaper.bounds, afterScreenUpdates: true)
 			let snapshot = UIGraphicsGetImageFromCurrentImageContext()
-			log("banner frame " + (banners?.saisakiWord?.frame.debugDescription ?? "null"))
 			UIGraphicsEndImageContext()
 			cachedSnapshot = snapshot
 			shouldUpdateCachedSnapshot = false
@@ -65,20 +63,19 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 		overrideWallpaper = SSKColoredWallpaperView(color: #colorLiteral(red: 0.9030858278, green: 0.2467186451, blue: 0.6991283298, alpha: 1), emblem: wpEmblem)
 	}
 	
-	public func unlock(successful: Bool, completion: (() -> Void)? = nil) {
+	public func unlock(successful: Bool, completion: ((Bool) -> Void)? = nil) {
 		guard let banners = banners else {
+			completion?(false)
 			return
 		}
 		if (successful) {
 			banners.open(animated: true) { _ in
-				completion?()
 				banners.removeFromSuperview()
 				self.banners = nil
 				self.shouldUpdateCachedSnapshot = true
 				self.wallpaperProvider?.updateWallpaper()
+				completion?(true)
 			}
-//			shouldUpdateCachedSnapshot = true
-//			self.wallpaperProvider?.updateWallpaper()
 		}
 	}
 	
@@ -101,8 +98,6 @@ public class LockScreenManager: NSObject, LockScreenWrapper, WallpaperViewWrappe
 		banners?.close(animated: false, completion: { _ in
 			self.shouldUpdateCachedSnapshot = true // for some reason have to put this inside completion
 		})
-//		shouldUpdateCachedSnapshot = true
-//		self.wallpaperProvider?.updateWallpaper()
 	}
 	
 	public func overridenWallpaperColor() -> UIColor? {

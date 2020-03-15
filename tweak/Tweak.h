@@ -8,9 +8,14 @@
 
 -(void)_createAuthenticationAssertion;
 -(void)setPasscodeVisible:(BOOL)arg1 animated:(BOOL)arg2;
+-(void)_runUnlockActionBlock:(BOOL)arg1;
+-(bool)_isPasscodeVisible;
+-(id)unlockActionBlock;
+-(void)setUnlockActionBlock:(id)arg1;
 @end
 
 @interface SBCoverSheetPresentationManager
+-(void)_notifyDelegateWillDismiss;
 -(void)coverSheetSlidingViewController:(id)arg1 committingToEndPresented:(BOOL)arg2 ;
 -(void)_prepareForDismissalTransition;
 -(void)_setTransitionProgress:(double)arg1 animated:(BOOL)arg2 gestureActive:(BOOL)arg3 coverSheetProgress:(double)arg4 completion:(/*^block*/id)arg5 ;

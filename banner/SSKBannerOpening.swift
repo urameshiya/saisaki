@@ -58,7 +58,7 @@ public class SSKBannerOpening : UIView {
 		let midX = center.x
 		let midY = center.y
 		let spacing: CGFloat = (frame.height + 200) / CGFloat(numBanners + 1)
-		let duration: Double = animated ? 1.0 : 0.0
+		let duration: Double = animated ? 0.3 : 0.0
 		let mainBanner = saisakiBanner!
 		let emblem = saisakiWord
 //		emblem?.alpha = 0
@@ -88,7 +88,7 @@ public class SSKBannerOpening : UIView {
 	
 	public func open(animated: Bool, completion: ((Bool) -> Void)? = nil) {
 		let dxOut = bounds.width + 30
-		let duration: Double = animated ? 1.0 : 0.0
+		let duration: Double = animated ? 0.3 : 0.0
 		let mainBanner = saisakiBanner!
 		
 		UIView.animateKeyframes(withDuration: duration, delay: 0, options: [], animations: {
