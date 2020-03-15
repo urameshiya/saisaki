@@ -47,8 +47,11 @@ static id<WallpaperViewWrapper> wallpaperWrapper;
     return self.ssk_wallpaperView;
 }
 -(id)_blurViewsForVariant:(long long)arg1 { // workaround the variant bug where variant = 0 unless reset wallpaper
-    NSHashTable *ls = [self valueForKey:@"_homescreenBlurViews"];
-    return ls.count == 0 ? [self valueForKey:@"_lockscreenBlurViews"] : ls;
+    NSHashTable *hs = [self valueForKey:@"_homescreenBlurViews"];
+    NSHashTable *ls = [self valueForKey:@"_lockscreenBlurViews"];
+    NSHashTable *copy = ls.copy;
+    [copy unionHashTable:hs];
+    return copy;
 }
 
 -(void)cleanupOldSharedWallpaper:(id)arg1 lockSreenWallpaper:(id)arg2 homeScreenWallpaper:(id)arg3 {
